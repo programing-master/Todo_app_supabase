@@ -44,7 +44,7 @@ export default function TaskList() {
 
   if (!tasks || tasks.length === 0) {
     return (
-      <div className="w-full md:w-[60%] border border-gray-300 rounded-xl h-[70vh] p-6 bg-white shadow-sm">
+      <div className="w-full md:w-[60%] border border-gray-300 rounded-xl h-[70vh] p-2 bg-white shadow-sm">
         <div className="flex flex-col items-center justify-center h-full text-center">
           <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
             <span className="text-blue-500 text-2xl">📝</span>

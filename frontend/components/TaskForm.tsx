@@ -10,7 +10,7 @@ interface TaskFormProps {
 
 export default function TaskForm({ taskId }: TaskFormProps) {
   const router = useRouter()
-  const { createTask, updateTask, getTask, loading } = useTasks()
+  const { createTask, updateTask, getTask, loading, tasks } = useTasks()
   
   const [formData, setFormData] = useState({
     task: '',
@@ -37,6 +37,22 @@ export default function TaskForm({ taskId }: TaskFormProps) {
     }
   }, [taskId])
 
+  // Limpiar formulario cuando se carga la lista de tareas (si no estamos editando)
+  useEffect(() => {
+    if (!isEditing && tasks.length > 0) {
+      // Opcional: puedes agregar un pequeño delay para mejor UX
+      const timer = setTimeout(() => {
+        setFormData({
+          task: '',
+          description: '',
+          done: false
+        })
+      }, 500)
+      
+      return () => clearTimeout(timer)
+    }
+  }, [tasks, isEditing])
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target
     if (type === 'checkbox') {
@@ -62,12 +78,7 @@ export default function TaskForm({ taskId }: TaskFormProps) {
         router.push('/')
       } else {
         await createTask(formData)
-        alert('✅ Tarea creada correctamente')
-        setFormData({
-          task: '',
-          description: '',
-          done: false
-        })
+        // El formulario se limpiará automáticamente por el useEffect
       }
     } catch (error: any) {
       alert(`❌ Error: ${error.message || 'Error desconocido'}`)
@@ -87,6 +98,9 @@ export default function TaskForm({ taskId }: TaskFormProps) {
       }
     }
   }
+
+  // Determinar si el botón debe estar deshabilitado
+  const isSubmitDisabled = loading || !formData.task.trim()
 
   return (
     <div className="w-full md:w-[40%] border border-gray-300 rounded-xl p-6 bg-white shadow-sm">
@@ -175,24 +189,52 @@ export default function TaskForm({ taskId }: TaskFormProps) {
           
           <button
             type="submit"
-            disabled={loading || !formData.task.trim()}
-            className={`flex-1 px-4 py-3 rounded-lg font-medium transition ${
+            disabled={isSubmitDisabled}
+            className={`flex-1 px-4 py-3 rounded-lg font-medium transition flex items-center justify-center gap-2 ${
               isEditing
-                ? 'bg-yellow-500 hover:bg-yellow-600 text-white disabled:bg-yellow-300'
-                : 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white disabled:from-blue-300 disabled:to-blue-400'
+                ? 'bg-yellow-500 hover:bg-yellow-600 text-white disabled:bg-yellow-300 disabled:cursor-not-allowed'
+                : 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white disabled:from-blue-300 disabled:to-blue-400 disabled:cursor-not-allowed'
             }`}
           >
             {loading ? (
-              <div className="flex items-center justify-center gap-2">
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              <>
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                 {isEditing ? 'Actualizando...' : 'Creando...'}
-              </div>
+              </>
             ) : (
-              isEditing ? 'Actualizar Tarea' : 'Crear Tarea'
+              <>
+                {isEditing ? (
+                  <>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Actualizar Tarea
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    Agregar Tarea
+                  </>
+                )}
+              </>
             )}
           </button>
         </div>
       </form>
+
+      {/* Indicador de estado */}
+      {!isEditing && (
+        <div className="mt-4 pt-4 border-t border-gray-100">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-gray-500">Tareas creadas: {tasks.length}</span>
+            {formData.task && (
+              <span className="text-green-600 font-medium">✓ Listo para guardar</span>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
